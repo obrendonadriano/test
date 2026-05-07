@@ -1,0 +1,262 @@
+.home-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+.header {
+  background-color: var(--color-white);
+  padding: 1.5rem 0;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.selection-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: 2rem 0 1.5rem;
+  align-items: center;
+}
+
+@media (min-width: 992px) {
+  .selection-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+}
+
+.selection-text {
+  max-width: 500px;
+}
+
+.selection-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-text-light);
+  margin-bottom: 1rem;
+}
+
+.selection-title {
+  font-size: 2rem;
+  line-height: 1.12;
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+}
+
+.selection-subtitle {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text-light);
+  margin-bottom: 1.25rem;
+}
+
+.reputation-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 520px;
+  margin-top: 1.5rem;
+  color: var(--color-text-light);
+}
+
+.reputation-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.reputation-badge p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.reputation-badge strong {
+  color: var(--color-text);
+}
+
+.reputation-badge span {
+  display: block;
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  background-color: var(--color-white);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}
+
+.selection-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.product-card {
+  background-color: var(--color-white);
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  border-color: #bbf7d0;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.product-icon-wrapper {
+  background-color: #f0fdf4;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+}
+
+.product-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--color-text-light);
+  margin-bottom: 1rem;
+}
+
+.product-title strong {
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.product-details {
+  flex-grow: 1;
+  margin-bottom: 1.25rem;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.product-btn {
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  background-color: #84cc16; /* Lighter green matching the image */
+  transition: background-color 0.2s ease;
+}
+
+.product-btn:hover {
+  background-color: #65a30d;
+}
+
+.home-legal-footer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 1rem 6rem;
+  font-size: 0.875rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+  .selection-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .selection-title {
+    font-size: 2.5rem;
+  }
+
+  .selection-subtitle {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  .product-card {
+    padding: 2rem;
+    border-radius: 1.5rem;
+  }
+
+  .product-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .product-title {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .product-details {
+    margin-bottom: 2rem;
+  }
+
+  .product-btn {
+    padding: 1rem;
+    font-size: 1.125rem;
+  }
+
+  .home-legal-footer {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .selection-grid {
+    padding: 4rem 1rem;
+  }
+
+  .reputation-badge {
+    margin-top: 6rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .reputation-badge {
+    align-items: flex-start;
+  }
+}
