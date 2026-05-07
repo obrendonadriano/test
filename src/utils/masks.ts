@@ -44,3 +44,17 @@ export const parseCurrency = (value: string) => {
   const cleanValue = value.replace(/\D/g, '');
   return cleanValue ? parseInt(cleanValue) / 100 : 0;
 };
+
+export const maskDate = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{2})(\d)/, '$1/$2')
+    .replace(/(\d{2})(\d)/, '$1/$2')
+    .replace(/(\/\d{4})\d+?$/, '$1');
+};
+
+export const parseDateToISO = (value: string) => {
+  const [day, month, year] = value.split('/');
+  if (!day || !month || !year || year.length !== 4) return value;
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};

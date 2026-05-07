@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { saveContactConsent } from '../lib/consent';
 import { trackLead } from '../lib/meta';
-import { maskCPF, maskPhone, maskPlate, maskCurrency, parseCurrency } from '../utils/masks';
+import { maskCPF, maskPhone, maskPlate, maskCurrency, maskDate, parseCurrency, parseDateToISO } from '../utils/masks';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import './LeadForm.css';
 
@@ -32,6 +32,7 @@ export default function LeadForm() {
     if (name === 'telefone') formattedValue = maskPhone(value);
     if (name === 'placa') formattedValue = maskPlate(value);
     if (name === 'valor_desejado') formattedValue = maskCurrency(value);
+    if (name === 'data_nascimento') formattedValue = maskDate(value);
     if (name === 'ano') formattedValue = value.replace(/\D/g, '').substring(0, 4);
     
     setFormData((prev) => ({ ...prev, [name]: formattedValue }));
@@ -54,7 +55,7 @@ export default function LeadForm() {
         nome: formData.nome,
         cpf: formData.cpf.replace(/\D/g, ''),
         telefone: formData.telefone.replace(/\D/g, ''),
-        data_nascimento: formData.data_nascimento,
+        data_nascimento: parseDateToISO(formData.data_nascimento),
         placa: formData.placa,
         ano: Number(formData.ano),
         valor_desejado: parseCurrency(formData.valor_desejado),
@@ -178,11 +179,14 @@ export default function LeadForm() {
           <div className="form-group">
             <label className="form-label">Data de nascimento</label>
             <input
-              type="date"
+              type="text"
               name="data_nascimento"
               value={formData.data_nascimento}
               onChange={handleChange}
               className="form-input"
+              placeholder="dd/mm/aaaa"
+              inputMode="numeric"
+              maxLength={10}
               required
             />
           </div>

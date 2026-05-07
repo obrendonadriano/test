@@ -1,19 +1,19 @@
 .lead-form-container {
   background-color: var(--color-white);
-  padding: 1.1rem;
+  padding: 1rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
 }
 
 .form-title {
-  font-size: 1.3rem;
+  font-size: 1.22rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
   color: var(--color-text);
 }
 
 .form-subtitle {
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   color: var(--color-text-light);
   margin-bottom: 1rem;
 }
@@ -33,8 +33,8 @@
 .btn-submit {
   width: 100%;
   margin-top: 0.6rem;
-  padding: 0.9rem;
-  font-size: 1rem;
+  padding: 0.82rem;
+  font-size: 0.95rem;
 }
 
 .terms-text {
@@ -81,7 +81,7 @@
 }
 
 .checkbox-label {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--color-text);
   line-height: 1.3;
 }
@@ -100,6 +100,10 @@
     font-size: 1.5rem;
   }
 
+  .form-subtitle {
+    font-size: 0.875rem;
+  }
+
   .form-grid {
     gap: 0.85rem;
   }
@@ -107,6 +111,10 @@
   .btn-submit {
     padding: 1rem;
     font-size: 1.125rem;
+  }
+
+  .checkbox-label {
+    font-size: 0.875rem;
   }
 }
 
