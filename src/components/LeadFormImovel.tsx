@@ -5,6 +5,7 @@ import { LEAD_TABLES } from '../lib/leadTables';
 import { saveContactConsent } from '../lib/consent';
 import { trackLead } from '../lib/meta';
 import { buildLeadWhatsAppMessage, openLeadWhatsApp } from '../lib/whatsapp';
+import { captureAttribution } from '../lib/attribution';
 import { maskCPF, maskPhone, maskCurrency, maskDate, parseCurrency, parseDateToISO } from '../utils/masks';
 import { CheckCircle2, Loader2, MessageCircle, X } from 'lucide-react';
 import './LeadForm.css';
@@ -57,6 +58,7 @@ export default function LeadFormImovel() {
         placa: 'IMOVEL-PENDENTE',
         ano: 0,
         valor_desejado: parseCurrency(formData.valor_desejado),
+        ...captureAttribution(),
       };
 
       if (draftLeadId) {
@@ -122,6 +124,7 @@ export default function LeadFormImovel() {
         placa: `IMOVEL-${formData.tipo_imovel}`.substring(0, 20),
         ano: formData.ano_imovel ? Number(formData.ano_imovel) : 0,
         valor_desejado: parseCurrency(formData.valor_desejado),
+        ...captureAttribution(),
       };
 
       const { error: supabaseError } = draftLeadId

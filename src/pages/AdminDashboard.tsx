@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { LEAD_TABLES, type LeadProductType } from '../lib/leadTables';
 import { WHATSAPP_DESTINATIONS_TABLE, type WhatsAppDestination } from '../lib/whatsapp';
+import { getTrafficSourceLabel, type AttributionData } from '../lib/attribution';
 import { maskPhone } from '../utils/masks';
 import { LogOut, Download, Trash2, FileText, Search, Filter, MessageCircle, Users, CalendarDays, DollarSign, Clock, CheckCircle, XCircle, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -24,7 +25,7 @@ type Lead = {
   created_at: string;
   leadTable: string;
   productType: LeadProductType;
-};
+} & Partial<AttributionData>;
 
 export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -199,6 +200,11 @@ export default function AdminDashboard() {
     const wsData = leads.map((lead) => ({
       Nome: lead.nome,
       Produto: lead.productType === 'imovel' ? 'Imóvel' : 'Veículo',
+      Origem: getTrafficSourceLabel(lead),
+      Campanha: lead.utm_campaign || lead.campaign_id || '',
+      Conjunto: lead.adset_id || '',
+      Anuncio: lead.ad_id || '',
+      Posicionamento: lead.placement || lead.site_source_name || '',
       CPF: lead.cpf,
       Telefone: lead.telefone,
       'Data de Nascimento': lead.data_nascimento,
@@ -225,10 +231,11 @@ export default function AdminDashboard() {
     doc.setTextColor(100, 100, 100);
     doc.text(`Total de leads: ${leads.length} | Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
 
-    const tableColumn = ["Data", "Produto", "Nome", "Telefone", "Garantia", "Valor"];
+    const tableColumn = ["Data", "Produto", "Origem", "Nome", "Telefone", "Garantia", "Valor"];
     const tableRows = leads.map(lead => [
       new Date(lead.created_at).toLocaleDateString('pt-BR'),
       lead.productType === 'imovel' ? 'Imóvel' : 'Veículo',
+      getTrafficSourceLabel(lead),
       lead.nome,
       lead.telefone,
       lead.productType === 'imovel' ? lead.placa.replace('IMOVEL-', '') : lead.placa,
@@ -281,6 +288,19 @@ export default function AdminDashboard() {
   const emAtendimento = leads.filter(l => l.status === 'Em Atendimento').length;
   const fechados = leads.filter(l => l.status === 'Fechado').length;
   const cancelados = leads.filter(l => l.status === 'Sem Interesse').length;
+  const sourceCounts = leads.reduce<Record<string, number>>((acc, lead) => {
+    const source = getTrafficSourceLabel(lead);
+    acc[source] = (acc[source] || 0) + 1;
+    return acc;
+  }, {});
+  const topSource = Object.entries(sourceCounts).sort((a, b) => b[1] - a[1])[0];
+  const metaLeads = leads.filter((lead) => ['Instagram', 'Facebook', 'Meta Ads'].includes(getTrafficSourceLabel(lead))).length;
+  const instagramLeads = leads.filter((lead) => getTrafficSourceLabel(lead) === 'Instagram').length;
+  const topCampaigns = Object.entries(leads.reduce<Record<string, number>>((acc, lead) => {
+    const campaign = lead.utm_campaign || lead.campaign_id || 'Sem campanha';
+    acc[campaign] = (acc[campaign] || 0) + 1;
+    return acc;
+  }, {})).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   return (
     <div className="admin-wrapper">
@@ -345,6 +365,56 @@ export default function AdminDashboard() {
             </div>
             <div className="premium-card-sub">Soma de todos os leads</div>
           </div>
+        </div>
+
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--color-text)', marginTop: '2rem' }}>Origem dos Leads</h3>
+        <div className="premium-cards-grid">
+          <div className="premium-card">
+            <div className="premium-card-header">
+              <span className="premium-card-title">Principal origem</span>
+              <div className="premium-card-icon" style={{ backgroundColor: '#e0f2fe', color: '#0369a1' }}>
+                <Filter size={20} />
+              </div>
+            </div>
+            <div className="premium-card-value">{topSource ? topSource[0] : 'Sem dados'}</div>
+            <div className="premium-card-sub">{topSource ? `${topSource[1]} leads` : 'Nenhum lead capturado'}</div>
+          </div>
+
+          <div className="premium-card">
+            <div className="premium-card-header">
+              <span className="premium-card-title">Meta Ads</span>
+              <div className="premium-card-icon" style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}>
+                <Users size={20} />
+              </div>
+            </div>
+            <div className="premium-card-value">{metaLeads}</div>
+            <div className="premium-card-sub">Facebook, Instagram ou fbclid</div>
+          </div>
+
+          <div className="premium-card">
+            <div className="premium-card-header">
+              <span className="premium-card-title">Instagram</span>
+              <div className="premium-card-icon" style={{ backgroundColor: '#fce7f3', color: '#be185d' }}>
+                <MessageCircle size={20} />
+              </div>
+            </div>
+            <div className="premium-card-value">{instagramLeads}</div>
+            <div className="premium-card-sub">Leads identificados como Instagram</div>
+          </div>
+        </div>
+
+        <div className="table-container attribution-summary">
+          <h3>Campanhas com mais leads</h3>
+          {topCampaigns.length === 0 ? (
+            <p>Nenhuma campanha identificada ainda.</p>
+          ) : (
+            topCampaigns.map(([campaign, count]) => (
+              <div className="attribution-row" key={campaign}>
+                <span>{campaign}</span>
+                <strong>{count}</strong>
+              </div>
+            ))
+          )}
         </div>
 
         <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--color-text)', marginTop: '2rem' }}>Funil de Vendas</h3>
@@ -537,6 +607,7 @@ export default function AdminDashboard() {
                   <tr>
                     <th>Data</th>
                     <th>Nome / CPF</th>
+                    <th>Origem</th>
                     <th>Status</th>
                     <th>Telefone</th>
                     <th>Garantia</th>
@@ -551,6 +622,12 @@ export default function AdminDashboard() {
                     <td>
                       <div style={{ fontWeight: 500 }}>{lead.nome}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--color-text-light)' }}>CPF: {lead.cpf}</div>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 600 }}>{getTrafficSourceLabel(lead)}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-light)' }}>
+                        {lead.utm_campaign || lead.campaign_id || 'Sem campanha'}
+                      </div>
                     </td>
                     <td>
                       <select 

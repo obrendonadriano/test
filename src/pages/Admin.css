@@ -202,6 +202,44 @@
   height: 100%;
 }
 
+.attribution-summary {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.attribution-summary h3 {
+  margin: 0;
+}
+
+.attribution-summary p {
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+.attribution-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+}
+
+.attribution-row span {
+  color: var(--color-text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.attribution-row strong {
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
 .whatsapp-manager {
   margin-bottom: 2rem;
   padding: 1rem;

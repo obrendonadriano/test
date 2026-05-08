@@ -5,6 +5,7 @@ import { LEAD_TABLES } from '../lib/leadTables';
 import { saveContactConsent } from '../lib/consent';
 import { trackLead } from '../lib/meta';
 import { buildLeadWhatsAppMessage, openLeadWhatsApp } from '../lib/whatsapp';
+import { captureAttribution } from '../lib/attribution';
 import { maskCPF, maskPhone, maskPlate, maskCurrency, maskDate, parseCurrency, parseDateToISO } from '../utils/masks';
 import { CheckCircle2, Loader2, MessageCircle, X } from 'lucide-react';
 import './LeadForm.css';
@@ -58,6 +59,7 @@ export default function LeadForm() {
         placa: 'PENDENTE-VEICULO',
         ano: 0,
         valor_desejado: parseCurrency(formData.valor_desejado),
+        ...captureAttribution(),
       };
 
       if (draftLeadId) {
@@ -122,6 +124,7 @@ export default function LeadForm() {
         placa: formData.placa,
         ano: Number(formData.ano),
         valor_desejado: parseCurrency(formData.valor_desejado),
+        ...captureAttribution(),
       };
 
       const { error: supabaseError } = draftLeadId

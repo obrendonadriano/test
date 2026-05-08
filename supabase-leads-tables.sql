@@ -10,6 +10,19 @@ create table if not exists public.leads_veiculo (
   ano integer not null default 0,
   valor_desejado numeric not null default 0,
   status text not null default 'Novo',
+  utm_source text not null default '',
+  utm_medium text not null default '',
+  utm_campaign text not null default '',
+  utm_content text not null default '',
+  utm_term text not null default '',
+  fbclid text not null default '',
+  campaign_id text not null default '',
+  adset_id text not null default '',
+  ad_id text not null default '',
+  placement text not null default '',
+  site_source_name text not null default '',
+  referrer text not null default '',
+  landing_page text not null default '',
   created_at timestamptz not null default now()
 );
 
@@ -23,6 +36,19 @@ create table if not exists public.leads_imovel (
   ano integer not null default 0,
   valor_desejado numeric not null default 0,
   status text not null default 'Novo',
+  utm_source text not null default '',
+  utm_medium text not null default '',
+  utm_campaign text not null default '',
+  utm_content text not null default '',
+  utm_term text not null default '',
+  fbclid text not null default '',
+  campaign_id text not null default '',
+  adset_id text not null default '',
+  ad_id text not null default '',
+  placement text not null default '',
+  site_source_name text not null default '',
+  referrer text not null default '',
+  landing_page text not null default '',
   created_at timestamptz not null default now()
 );
 
@@ -37,6 +63,34 @@ create table if not exists public.whatsapp_destinations (
 create index if not exists leads_veiculo_created_at_idx on public.leads_veiculo (created_at desc);
 create index if not exists leads_imovel_created_at_idx on public.leads_imovel (created_at desc);
 create index if not exists whatsapp_destinations_created_at_idx on public.whatsapp_destinations (created_at asc);
+
+alter table public.leads_veiculo add column if not exists utm_source text not null default '';
+alter table public.leads_veiculo add column if not exists utm_medium text not null default '';
+alter table public.leads_veiculo add column if not exists utm_campaign text not null default '';
+alter table public.leads_veiculo add column if not exists utm_content text not null default '';
+alter table public.leads_veiculo add column if not exists utm_term text not null default '';
+alter table public.leads_veiculo add column if not exists fbclid text not null default '';
+alter table public.leads_veiculo add column if not exists campaign_id text not null default '';
+alter table public.leads_veiculo add column if not exists adset_id text not null default '';
+alter table public.leads_veiculo add column if not exists ad_id text not null default '';
+alter table public.leads_veiculo add column if not exists placement text not null default '';
+alter table public.leads_veiculo add column if not exists site_source_name text not null default '';
+alter table public.leads_veiculo add column if not exists referrer text not null default '';
+alter table public.leads_veiculo add column if not exists landing_page text not null default '';
+
+alter table public.leads_imovel add column if not exists utm_source text not null default '';
+alter table public.leads_imovel add column if not exists utm_medium text not null default '';
+alter table public.leads_imovel add column if not exists utm_campaign text not null default '';
+alter table public.leads_imovel add column if not exists utm_content text not null default '';
+alter table public.leads_imovel add column if not exists utm_term text not null default '';
+alter table public.leads_imovel add column if not exists fbclid text not null default '';
+alter table public.leads_imovel add column if not exists campaign_id text not null default '';
+alter table public.leads_imovel add column if not exists adset_id text not null default '';
+alter table public.leads_imovel add column if not exists ad_id text not null default '';
+alter table public.leads_imovel add column if not exists placement text not null default '';
+alter table public.leads_imovel add column if not exists site_source_name text not null default '';
+alter table public.leads_imovel add column if not exists referrer text not null default '';
+alter table public.leads_imovel add column if not exists landing_page text not null default '';
 
 do $$
 begin
