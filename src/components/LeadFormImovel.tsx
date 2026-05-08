@@ -141,7 +141,6 @@ export default function LeadFormImovel() {
         contentName: 'Simulação garantia de imóvel',
         fullName: formData.nome,
         phone: formData.telefone,
-        cpf: formData.cpf,
         value: dados.valor_desejado,
         productType: 'imovel',
       });

@@ -13,9 +13,20 @@ type LeadPayload = {
   contentName: string;
   fullName: string;
   phone: string;
-  cpf: string;
   value: number;
   productType: 'veiculo' | 'imovel';
+};
+
+type CapiPayload = {
+  eventName: 'PageView' | 'Lead';
+  eventId: string;
+  userData?: {
+    fullName?: string;
+    phone?: string;
+    fbp?: string;
+    fbc?: string;
+  };
+  customData?: Record<string, string | number>;
 };
 
 function getCookie(name: string) {
@@ -38,6 +49,27 @@ function getFbc() {
 function createEventId(eventName: string) {
   const id = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   return `${eventName}-${id}`;
+}
+
+function sendCapiEvent({ eventName, eventId, userData = {}, customData = {} }: CapiPayload) {
+  fetch(capiEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    keepalive: true,
+    body: JSON.stringify({
+      eventName,
+      eventId,
+      eventSourceUrl: window.location.href,
+      userData: {
+        ...userData,
+        fbp: getCookie('_fbp'),
+        fbc: getFbc(),
+      },
+      customData,
+    }),
+  }).catch(() => {
+    // Pixel already fired; CAPI may be unavailable on static hosting.
+  });
 }
 
 export function initMetaPixel() {
@@ -65,7 +97,13 @@ export function initMetaPixel() {
 }
 
 export function trackPageView() {
-  window.fbq?.('track', 'PageView');
+  const eventId = createEventId('PageView');
+
+  window.fbq?.('track', 'PageView', {}, { eventID: eventId });
+  sendCapiEvent({
+    eventName: 'PageView',
+    eventId,
+  });
 }
 
 export function trackLead(payload: LeadPayload) {
@@ -79,24 +117,13 @@ export function trackLead(payload: LeadPayload) {
 
   window.fbq?.('track', 'Lead', customData, { eventID: eventId });
 
-  fetch(capiEndpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    keepalive: true,
-    body: JSON.stringify({
-      eventName: 'Lead',
-      eventId,
-      eventSourceUrl: window.location.href,
-      userData: {
-        fullName: payload.fullName,
-        phone: payload.phone,
-        cpf: payload.cpf,
-        fbp: getCookie('_fbp'),
-        fbc: getFbc(),
-      },
-      customData,
-    }),
-  }).catch(() => {
-    // Pixel already fired; CAPI may be unavailable on static hosting.
+  sendCapiEvent({
+    eventName: 'Lead',
+    eventId,
+    userData: {
+      fullName: payload.fullName,
+      phone: payload.phone,
+    },
+    customData,
   });
 }

@@ -141,7 +141,6 @@ export default function LeadForm() {
         contentName: 'Simulação garantia de veículo',
         fullName: formData.nome,
         phone: formData.telefone,
-        cpf: formData.cpf,
         value: dados.valor_desejado,
         productType: 'veiculo',
       });

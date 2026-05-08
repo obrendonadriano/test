@@ -61,7 +61,6 @@ export default async function handler(req, res) {
         ph: hashPhone(userData.phone),
         fn: hash(firstName),
         ln: hash(lastName),
-        external_id: hash(userData.cpf),
         fbp: userData.fbp,
         fbc: userData.fbc,
       },
