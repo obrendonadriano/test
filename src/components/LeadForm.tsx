@@ -241,7 +241,7 @@ export default function LeadForm() {
 
             <button type="button" className="btn btn-primary btn-submit" onClick={goToDetailsStep} disabled={isSavingDraft}>
               {isSavingDraft ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
-              {isSavingDraft ? 'Salvando...' : 'Continuar'}
+              {isSavingDraft ? 'Salvando...' : 'Começar'}
             </button>
           </>
         ) : (
