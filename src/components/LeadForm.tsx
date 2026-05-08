@@ -4,8 +4,9 @@ import { supabase } from '../lib/supabase';
 import { LEAD_TABLES } from '../lib/leadTables';
 import { saveContactConsent } from '../lib/consent';
 import { trackLead } from '../lib/meta';
+import { buildLeadWhatsAppMessage, openLeadWhatsApp } from '../lib/whatsapp';
 import { maskCPF, maskPhone, maskPlate, maskCurrency, maskDate, parseCurrency, parseDateToISO } from '../utils/masks';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, MessageCircle, X } from 'lucide-react';
 import './LeadForm.css';
 
 export default function LeadForm() {
@@ -25,7 +26,9 @@ export default function LeadForm() {
   const [showSaibaMais, setShowSaibaMais] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [showFinishPopup, setShowFinishPopup] = useState(false);
+  const [isOpeningWhatsApp, setIsOpeningWhatsApp] = useState(false);
+  const [whatsAppError, setWhatsAppError] = useState('');
   const [error, setError] = useState('');
 
   const getErrorMessage = (err: unknown) => {
@@ -143,7 +146,7 @@ export default function LeadForm() {
         productType: 'veiculo',
       });
 
-      setIsSuccess(true);
+      setShowFinishPopup(true);
     } catch (err) {
       console.error(err);
       setError(getErrorMessage(err) || 'Erro ao enviar sua solicitação. Tente novamente mais tarde.');
@@ -152,47 +155,32 @@ export default function LeadForm() {
     }
   };
 
-  if (isSuccess) {
-    return (
-      <div className="lead-form-container success-message" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-        <CheckCircle2 size={64} color="var(--color-primary)" style={{ margin: '0 auto 1.5rem' }} />
-        <h3 className="form-title" style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--color-text)' }}>
-          Muito obrigado por escolher a Averbai!
-        </h3>
-        <p className="form-subtitle" style={{ color: 'var(--color-text-light)', marginBottom: '2rem', lineHeight: '1.6' }}>
-          Recebemos sua solicitação com sucesso. Em breve, um de nossos especialistas entrará em contato com uma proposta personalizada para você.
-        </p>
+  const handleFinishOnWhatsApp = async () => {
+    setWhatsAppError('');
+    setIsOpeningWhatsApp(true);
 
-        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', textAlign: 'left', marginBottom: '2rem' }}>
-          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#25D366', flexShrink: 0, marginTop: '2px' }}>
-            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-          </svg>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-light)', margin: 0, lineHeight: '1.4' }}>
-            Usamos o <strong>WhatsApp</strong> como uma das nossas formas de contato com você, prometemos não enviar spam.
-          </p>
-        </div>
+    try {
+      const message = buildLeadWhatsAppMessage({
+        productLabel: 'Crédito com garantia de veículo',
+        nome: formData.nome,
+        telefone: formData.telefone,
+        cpf: formData.cpf,
+        dataNascimento: formData.data_nascimento,
+        valorDesejado: formData.valor_desejado,
+        garantia: formData.placa,
+        ano: formData.ano,
+      });
 
-        <button 
-          className="btn btn-primary"
-          style={{ width: '100%' }}
-          onClick={() => {
-            setIsSuccess(false);
-            setFormData({
-              nome: '', cpf: '', telefone: '', data_nascimento: '',
-              placa: '', ano: '', valor_desejado: ''
-            });
-            setTermsAccepted(false);
-            setDraftLeadId(null);
-            setStep(1);
-          }}
-        >
-          Fazer nova simulação
-        </button>
-      </div>
-    );
-  }
+      await openLeadWhatsApp(message);
+    } catch (err) {
+      setWhatsAppError(getErrorMessage(err));
+    } finally {
+      setIsOpeningWhatsApp(false);
+    }
+  };
 
   return (
+    <>
     <div className="lead-form-container">
       <div className="form-step-header">
         <div>
@@ -358,5 +346,28 @@ export default function LeadForm() {
         )}
       </div>
     </div>
+    {showFinishPopup && (
+      <div className="lead-popup-overlay" role="dialog" aria-modal="true" aria-labelledby="lead-popup-title">
+        <div className="lead-popup">
+          <button className="lead-popup-close" type="button" onClick={() => setShowFinishPopup(false)} aria-label="Fechar">
+            <X size={18} />
+          </button>
+          <div className="lead-popup-icon">
+            <CheckCircle2 size={34} />
+          </div>
+          <h3 id="lead-popup-title">Sua simulação está quase finalizada</h3>
+          <p>
+            Para acelerar sua análise, finalize pelo WhatsApp com seus dados já preenchidos.
+            Assim nossa equipe consegue continuar seu atendimento mais rápido.
+          </p>
+          {whatsAppError && <div className="form-error lead-popup-error">{whatsAppError}</div>}
+          <button className="btn btn-primary lead-popup-whatsapp" type="button" onClick={handleFinishOnWhatsApp} disabled={isOpeningWhatsApp}>
+            {isOpeningWhatsApp ? <Loader2 className="animate-spin mr-2" size={20} /> : <MessageCircle size={20} />}
+            {isOpeningWhatsApp ? 'Abrindo WhatsApp...' : 'Finalizar pelo WhatsApp'}
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

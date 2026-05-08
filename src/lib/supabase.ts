@@ -7,6 +7,12 @@ const missingConfigError = {
 };
 
 const disabledResponse = () => Promise.resolve({ data: null, error: missingConfigError });
+const disabledSelect = () => ({
+  order: disabledResponse,
+  eq: () => ({
+    order: disabledResponse,
+  }),
+});
 const disabledMutation = () => ({
   data: null,
   error: missingConfigError,
@@ -19,9 +25,7 @@ const disabledMutation = () => ({
 const disabledSupabase = {
   from: () => ({
     insert: disabledMutation,
-    select: () => ({
-      order: disabledResponse,
-    }),
+    select: disabledSelect,
     delete: () => ({
       eq: disabledResponse,
     }),

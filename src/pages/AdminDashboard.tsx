@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { LEAD_TABLES, type LeadProductType } from '../lib/leadTables';
-import { LogOut, Download, Trash2, FileText, Search, Filter, MessageCircle, Users, CalendarDays, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { WHATSAPP_DESTINATIONS_TABLE, type WhatsAppDestination } from '../lib/whatsapp';
+import { maskPhone } from '../utils/masks';
+import { LogOut, Download, Trash2, FileText, Search, Filter, MessageCircle, Users, CalendarDays, DollarSign, Clock, CheckCircle, XCircle, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -26,6 +28,8 @@ type Lead = {
 
 export default function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [whatsapps, setWhatsapps] = useState<WhatsAppDestination[]>([]);
+  const [whatsappForm, setWhatsappForm] = useState({ label: '', phone: '' });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
@@ -34,6 +38,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     checkUser();
     fetchLeads();
+    fetchWhatsapps();
   }, []);
 
   const checkUser = async () => {
@@ -73,6 +78,81 @@ export default function AdminDashboard() {
       console.error("Erro ao buscar leads:", err);
     }
     setLoading(false);
+  };
+
+  const fetchWhatsapps = async () => {
+    try {
+      const { data, error } = await supabase
+        .from(WHATSAPP_DESTINATIONS_TABLE)
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setWhatsapps((data || []) as WhatsAppDestination[]);
+    } catch (err) {
+      console.error("Erro ao buscar WhatsApps:", err);
+    }
+  };
+
+  const handleAddWhatsapp = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const label = whatsappForm.label.trim() || `Atendimento ${whatsapps.length + 1}`;
+    const phone = whatsappForm.phone.replace(/\D/g, '');
+
+    if (phone.length < 10) {
+      alert('Digite um WhatsApp válido com DDD.');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from(WHATSAPP_DESTINATIONS_TABLE)
+        .insert([{ label, phone, active: true }])
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      if (data) setWhatsapps((current) => [...current, data as WhatsAppDestination]);
+      setWhatsappForm({ label: '', phone: '' });
+    } catch (err) {
+      console.error("Erro ao adicionar WhatsApp:", err);
+      alert('Erro ao adicionar WhatsApp. Verifique se a tabela whatsapp_destinations foi criada.');
+    }
+  };
+
+  const handleWhatsappActiveChange = async (destination: WhatsAppDestination, active: boolean) => {
+    try {
+      const { error } = await supabase
+        .from(WHATSAPP_DESTINATIONS_TABLE)
+        .update({ active })
+        .eq('id', destination.id);
+
+      if (error) throw error;
+      setWhatsapps((current) => current.map((item) => (
+        item.id === destination.id ? { ...item, active } : item
+      )));
+    } catch (err) {
+      console.error("Erro ao atualizar WhatsApp:", err);
+      alert('Erro ao atualizar WhatsApp.');
+    }
+  };
+
+  const handleDeleteWhatsapp = async (destination: WhatsAppDestination) => {
+    if (!window.confirm(`Excluir o WhatsApp ${destination.label}?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from(WHATSAPP_DESTINATIONS_TABLE)
+        .delete()
+        .eq('id', destination.id);
+
+      if (error) throw error;
+      setWhatsapps((current) => current.filter((item) => item.id !== destination.id));
+    } catch (err) {
+      console.error("Erro ao excluir WhatsApp:", err);
+      alert('Erro ao excluir WhatsApp.');
+    }
   };
 
   const handleDelete = async (lead: Lead) => {
@@ -311,6 +391,65 @@ export default function AdminDashboard() {
               </div>
               <p style={{ fontSize: '1.75rem', fontWeight: 800, color: '#334155' }}>{cancelados}</p>
             </div>
+          </div>
+        </div>
+
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--color-text)', marginTop: '2rem' }}>WhatsApps de atendimento</h3>
+        <div className="table-container whatsapp-manager">
+          <form className="whatsapp-form" onSubmit={handleAddWhatsapp}>
+            <div className="form-group">
+              <label className="form-label">Nome do atendente ou setor</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ex: Comercial 1"
+                value={whatsappForm.label}
+                onChange={(e) => setWhatsappForm((current) => ({ ...current, label: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">WhatsApp</label>
+              <input
+                type="tel"
+                className="form-input"
+                placeholder="(00) 00000-0000"
+                value={whatsappForm.phone}
+                onChange={(e) => setWhatsappForm((current) => ({ ...current, phone: maskPhone(e.target.value) }))}
+                maxLength={15}
+              />
+            </div>
+            <button className="btn btn-primary whatsapp-add-btn" type="submit">
+              <Plus size={18} />
+              Adicionar
+            </button>
+          </form>
+
+          <div className="whatsapp-list">
+            {whatsapps.length === 0 ? (
+              <p className="whatsapp-empty">Nenhum WhatsApp cadastrado ainda.</p>
+            ) : (
+              whatsapps.map((destination) => (
+                <div className="whatsapp-row" key={destination.id}>
+                  <div>
+                    <strong>{destination.label}</strong>
+                    <span>{maskPhone(destination.phone)}</span>
+                  </div>
+                  <div className="whatsapp-actions">
+                    <label className="whatsapp-toggle">
+                      <input
+                        type="checkbox"
+                        checked={destination.active}
+                        onChange={(e) => handleWhatsappActiveChange(destination, e.target.checked)}
+                      />
+                      {destination.active ? 'Ativo' : 'Inativo'}
+                    </label>
+                    <button type="button" onClick={() => handleDeleteWhatsapp(destination)} title="Excluir WhatsApp">
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

@@ -26,8 +26,17 @@ create table if not exists public.leads_imovel (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.whatsapp_destinations (
+  id uuid primary key default gen_random_uuid(),
+  label text not null default '',
+  phone text not null default '',
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists leads_veiculo_created_at_idx on public.leads_veiculo (created_at desc);
 create index if not exists leads_imovel_created_at_idx on public.leads_imovel (created_at desc);
+create index if not exists whatsapp_destinations_created_at_idx on public.whatsapp_destinations (created_at asc);
 
 do $$
 begin
@@ -69,3 +78,76 @@ begin
     on conflict (id) do nothing;
   end if;
 end $$;
+
+alter table public.leads_veiculo enable row level security;
+alter table public.leads_imovel enable row level security;
+alter table public.whatsapp_destinations enable row level security;
+
+drop policy if exists "Permitir inserir leads de veiculo" on public.leads_veiculo;
+drop policy if exists "Permitir atualizar leads de veiculo" on public.leads_veiculo;
+drop policy if exists "Permitir ler leads de veiculo" on public.leads_veiculo;
+drop policy if exists "Permitir excluir leads de veiculo" on public.leads_veiculo;
+
+drop policy if exists "Permitir inserir leads de imovel" on public.leads_imovel;
+drop policy if exists "Permitir atualizar leads de imovel" on public.leads_imovel;
+drop policy if exists "Permitir ler leads de imovel" on public.leads_imovel;
+drop policy if exists "Permitir excluir leads de imovel" on public.leads_imovel;
+
+drop policy if exists "Permitir gerenciar whatsapps" on public.whatsapp_destinations;
+
+create policy "Permitir inserir leads de veiculo"
+on public.leads_veiculo
+for insert
+to anon
+with check (true);
+
+create policy "Permitir atualizar leads de veiculo"
+on public.leads_veiculo
+for update
+to anon
+using (true)
+with check (true);
+
+create policy "Permitir ler leads de veiculo"
+on public.leads_veiculo
+for select
+to anon
+using (true);
+
+create policy "Permitir excluir leads de veiculo"
+on public.leads_veiculo
+for delete
+to anon
+using (true);
+
+create policy "Permitir inserir leads de imovel"
+on public.leads_imovel
+for insert
+to anon
+with check (true);
+
+create policy "Permitir atualizar leads de imovel"
+on public.leads_imovel
+for update
+to anon
+using (true)
+with check (true);
+
+create policy "Permitir ler leads de imovel"
+on public.leads_imovel
+for select
+to anon
+using (true);
+
+create policy "Permitir excluir leads de imovel"
+on public.leads_imovel
+for delete
+to anon
+using (true);
+
+create policy "Permitir gerenciar whatsapps"
+on public.whatsapp_destinations
+for all
+to anon
+using (true)
+with check (true);
