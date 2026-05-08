@@ -8,6 +8,7 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 import './LeadForm.css';
 
 export default function LeadForm() {
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     nome: '',
     cpf: '',
@@ -23,6 +24,17 @@ export default function LeadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  const goToDetailsStep = () => {
+    setError('');
+
+    if (!formData.nome.trim() || formData.telefone.replace(/\D/g, '').length < 10 || !parseCurrency(formData.valor_desejado)) {
+      setError('Preencha nome, WhatsApp e valor desejado para continuar.');
+      return;
+    }
+
+    setStep(2);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -117,6 +129,7 @@ export default function LeadForm() {
               placa: '', ano: '', valor_desejado: ''
             });
             setTermsAccepted(false);
+            setStep(1);
           }}
         >
           Fazer nova simulação
@@ -127,26 +140,69 @@ export default function LeadForm() {
 
   return (
     <div className="lead-form-container">
-      <h2 className="form-title">Preencha seus dados</h2>
-      <p className="form-subtitle">E receba uma proposta personalizada sem compromisso.</p>
+      <div className="form-step-header">
+        <div>
+          <h2 className="form-title">{step === 1 ? 'Comece sua simulação' : 'Complete seus dados'}</h2>
+          <p className="form-subtitle">
+            {step === 1
+              ? 'Informe só o essencial. O restante vem na próxima etapa.'
+              : 'Falta pouco para receber sua proposta personalizada.'}
+          </p>
+        </div>
+        <span className="step-pill">Etapa {step} de 2</span>
+      </div>
 
       {error && <div className="form-error mb-4">{error}</div>}
 
       <form onSubmit={handleSubmit} className="form-grid">
-        <div className="form-group">
-          <label className="form-label">Nome completo</label>
-          <input
-            type="text"
-            name="nome"
-            value={formData.nome}
-            onChange={handleChange}
-            className="form-input"
-            placeholder="Digite seu nome completo"
-            required
-          />
-        </div>
+        {step === 1 ? (
+          <>
+            <div className="form-group">
+              <label className="form-label">Nome completo</label>
+              <input
+                type="text"
+                name="nome"
+                value={formData.nome}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Digite seu nome completo"
+                required
+              />
+            </div>
 
-        <div className="form-grid form-grid-2">
+            <div className="form-group">
+              <label className="form-label">Telefone (WhatsApp)</label>
+              <input
+                type="tel"
+                name="telefone"
+                value={formData.telefone}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="(00) 00000-0000"
+                maxLength={15}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Valor desejado</label>
+              <input
+                type="text"
+                name="valor_desejado"
+                value={formData.valor_desejado}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="R$ 0,00"
+                required
+              />
+            </div>
+
+            <button type="button" className="btn btn-primary btn-submit" onClick={goToDetailsStep}>
+              Continuar
+            </button>
+          </>
+        ) : (
+          <>
           <div className="form-group">
             <label className="form-label">CPF</label>
             <input
@@ -160,22 +216,7 @@ export default function LeadForm() {
               required
             />
           </div>
-          <div className="form-group">
-            <label className="form-label">Telefone (WhatsApp)</label>
-            <input
-              type="tel"
-              name="telefone"
-              value={formData.telefone}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="(00) 00000-0000"
-              maxLength={15}
-              required
-            />
-          </div>
-        </div>
 
-        <div className="form-grid form-grid-2">
           <div className="form-group">
             <label className="form-label">Data de nascimento</label>
             <input
@@ -190,21 +231,7 @@ export default function LeadForm() {
               required
             />
           </div>
-          <div className="form-group">
-            <label className="form-label">Valor desejado</label>
-            <input
-              type="text"
-              name="valor_desejado"
-              value={formData.valor_desejado}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="R$ 0,00"
-              required
-            />
-          </div>
-        </div>
 
-        <div className="form-grid form-grid-2">
           <div className="form-group">
             <label className="form-label">Placa do veículo</label>
             <input
@@ -218,20 +245,20 @@ export default function LeadForm() {
               required
             />
           </div>
-          <div className="form-group">
-            <label className="form-label">Ano do veículo</label>
-            <input
-              type="text"
-              name="ano"
-              value={formData.ano}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Ex: 2018"
-              maxLength={4}
-              required
-            />
-          </div>
-        </div>
+
+            <div className="form-group">
+              <label className="form-label">Ano do veículo</label>
+              <input
+                type="text"
+                name="ano"
+                value={formData.ano}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Ex: 2018"
+                maxLength={4}
+                required
+              />
+            </div>
 
         <div className="checkbox-container">
           <input
@@ -251,6 +278,12 @@ export default function LeadForm() {
           {isSubmitting ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
           {isSubmitting ? 'Enviando...' : 'Simular agora'}
         </button>
+
+        <button type="button" className="btn-back-step" onClick={() => setStep(1)}>
+          Voltar
+        </button>
+          </>
+        )}
       </form>
 
       <div className="terms-text">
