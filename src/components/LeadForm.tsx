@@ -145,7 +145,7 @@ export default function LeadForm() {
           <h2 className="form-title">{step === 1 ? 'Comece sua simulação' : 'Complete seus dados'}</h2>
           <p className="form-subtitle">
             {step === 1
-              ? 'Informe só o essencial. O restante vem na próxima etapa.'
+              ? 'Receba uma análise rápida e sem compromisso.'
               : 'Falta pouco para receber sua proposta personalizada.'}
           </p>
         </div>
