@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { LEAD_TABLES, type LeadProductType } from '../lib/leadTables';
 import { LogOut, Download, Trash2, FileText, Search, Filter, MessageCircle, Users, CalendarDays, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -8,8 +9,23 @@ import autoTable from 'jspdf-autotable';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import './Admin.css';
 
+type Lead = {
+  id: string;
+  nome: string;
+  cpf: string;
+  telefone: string;
+  data_nascimento: string | null;
+  placa: string;
+  ano: number;
+  valor_desejado: number;
+  status?: string | null;
+  created_at: string;
+  leadTable: string;
+  productType: LeadProductType;
+};
+
 export default function AdminDashboard() {
-  const [leads, setLeads] = useState<any[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
@@ -30,23 +46,39 @@ export default function AdminDashboard() {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('leads_financiamento')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [veiculoResponse, imovelResponse] = await Promise.all([
+        supabase.from(LEAD_TABLES.veiculo).select('*').order('created_at', { ascending: false }),
+        supabase.from(LEAD_TABLES.imovel).select('*').order('created_at', { ascending: false }),
+      ]);
 
-      if (error) throw error;
-      if (data) setLeads(data);
+      if (veiculoResponse.error) throw veiculoResponse.error;
+      if (imovelResponse.error) throw imovelResponse.error;
+
+      const veiculoLeads = (veiculoResponse.data || []).map((lead) => ({
+        ...lead,
+        leadTable: LEAD_TABLES.veiculo,
+        productType: 'veiculo' as const,
+      }));
+
+      const imovelLeads = (imovelResponse.data || []).map((lead) => ({
+        ...lead,
+        leadTable: LEAD_TABLES.imovel,
+        productType: 'imovel' as const,
+      }));
+
+      setLeads([...veiculoLeads, ...imovelLeads].sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }));
     } catch (err) {
       console.error("Erro ao buscar leads:", err);
     }
     setLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (lead: Lead) => {
     if (window.confirm('Tem certeza que deseja excluir este lead?')) {
       try {
-        const { error } = await supabase.from('leads_financiamento').delete().eq('id', id);
+        const { error } = await supabase.from(lead.leadTable).delete().eq('id', lead.id);
         if (error) throw error;
         fetchLeads();
       } catch (err) {
@@ -56,20 +88,25 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  const handleStatusChange = async (lead: Lead, newStatus: string) => {
     try {
       const { error } = await supabase
-        .from('leads_financiamento')
+        .from(lead.leadTable)
         .update({ status: newStatus })
-        .eq('id', id);
+        .eq('id', lead.id);
         
       if (error) throw error;
       
       // Atualiza o estado local para evitar recarregar tudo
-      setLeads(leads.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead));
-    } catch (err: any) {
+      setLeads(leads.map((currentLead) => (
+        currentLead.id === lead.id && currentLead.leadTable === lead.leadTable
+          ? { ...currentLead, status: newStatus }
+          : currentLead
+      )));
+    } catch (err) {
       console.error("Erro ao atualizar status:", err);
-      alert(`Erro ao atualizar: Você precisa criar a coluna 'status' no Supabase primeiro! Detalhes: ${err.message}`);
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      alert(`Erro ao atualizar: Você precisa criar a coluna 'status' no Supabase primeiro! Detalhes: ${message}`);
     }
   };
 
@@ -81,6 +118,7 @@ export default function AdminDashboard() {
   const exportToExcel = () => {
     const wsData = leads.map((lead) => ({
       Nome: lead.nome,
+      Produto: lead.productType === 'imovel' ? 'Imóvel' : 'Veículo',
       CPF: lead.cpf,
       Telefone: lead.telefone,
       'Data de Nascimento': lead.data_nascimento,
@@ -107,13 +145,13 @@ export default function AdminDashboard() {
     doc.setTextColor(100, 100, 100);
     doc.text(`Total de leads: ${leads.length} | Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
 
-    const tableColumn = ["Data", "Nome", "Telefone", "Placa", "Ano", "Valor"];
+    const tableColumn = ["Data", "Produto", "Nome", "Telefone", "Garantia", "Valor"];
     const tableRows = leads.map(lead => [
       new Date(lead.created_at).toLocaleDateString('pt-BR'),
+      lead.productType === 'imovel' ? 'Imóvel' : 'Veículo',
       lead.nome,
       lead.telefone,
-      lead.placa,
-      lead.ano,
+      lead.productType === 'imovel' ? lead.placa.replace('IMOVEL-', '') : lead.placa,
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lead.valor_desejado)
     ]);
 
@@ -369,7 +407,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {filteredLeads.map((lead) => (
-                  <tr key={lead.id}>
+                  <tr key={`${lead.leadTable}-${lead.id}`}>
                     <td>{new Date(lead.created_at).toLocaleDateString('pt-BR')}</td>
                     <td>
                       <div style={{ fontWeight: 500 }}>{lead.nome}</div>
@@ -378,7 +416,7 @@ export default function AdminDashboard() {
                     <td>
                       <select 
                         value={lead.status || 'Novo'} 
-                        onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                        onChange={(e) => handleStatusChange(lead, e.target.value)}
                         style={{ 
                           padding: '0.25rem 0.5rem', 
                           borderRadius: '1rem', 
@@ -436,7 +474,7 @@ export default function AdminDashboard() {
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lead.valor_desejado)}
                     </td>
                     <td>
-                      <button onClick={() => handleDelete(lead.id)} style={{ color: 'var(--color-error)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem' }} title="Excluir">
+                      <button onClick={() => handleDelete(lead)} style={{ color: 'var(--color-error)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem' }} title="Excluir">
                         <Trash2 size={18} />
                       </button>
                     </td>

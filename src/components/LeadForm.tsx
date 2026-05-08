@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { LEAD_TABLES } from '../lib/leadTables';
 import { saveContactConsent } from '../lib/consent';
 import { trackLead } from '../lib/meta';
 import { maskCPF, maskPhone, maskPlate, maskCurrency, maskDate, parseCurrency, parseDateToISO } from '../utils/masks';
@@ -58,14 +59,14 @@ export default function LeadForm() {
 
       if (draftLeadId) {
         const { error: updateError } = await supabase
-          .from('leads_financiamento')
+          .from(LEAD_TABLES.veiculo)
           .update(draftData)
           .eq('id', draftLeadId);
 
         if (updateError) throw updateError;
       } else {
         const { data, error: insertError } = await supabase
-          .from('leads_financiamento')
+          .from(LEAD_TABLES.veiculo)
           .insert([draftData])
           .select('id')
           .single();
@@ -122,11 +123,11 @@ export default function LeadForm() {
 
       const { error: supabaseError } = draftLeadId
         ? await supabase
-            .from('leads_financiamento')
+            .from(LEAD_TABLES.veiculo)
             .update(dados)
             .eq('id', draftLeadId)
         : await supabase
-            .from('leads_financiamento')
+            .from(LEAD_TABLES.veiculo)
             .insert([dados]);
 
       if (supabaseError) {
