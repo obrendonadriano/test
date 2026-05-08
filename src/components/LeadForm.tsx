@@ -334,9 +334,6 @@ export default function LeadForm() {
           {isSubmitting ? 'Enviando...' : 'Simular agora'}
         </button>
 
-        <button type="button" className="btn-back-step" onClick={() => setStep(1)}>
-          Voltar
-        </button>
           </>
         )}
       </form>

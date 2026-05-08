@@ -337,9 +337,6 @@ export default function LeadFormImovel() {
           {isSubmitting ? 'Enviando...' : 'Simular Imóvel'}
         </button>
 
-        <button type="button" className="btn-back-step" onClick={() => setStep(1)}>
-          Voltar
-        </button>
           </>
         )}
       </form>

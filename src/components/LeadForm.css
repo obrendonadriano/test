@@ -57,21 +57,6 @@
   font-size: 0.95rem;
 }
 
-.btn-back-step {
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: var(--color-text-light);
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding: 0.35rem 0;
-}
-
-.btn-back-step:hover {
-  color: var(--color-text);
-}
-
 .terms-text {
   font-size: 0.75rem;
   color: var(--color-text-light);
