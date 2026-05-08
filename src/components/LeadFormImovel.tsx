@@ -9,6 +9,7 @@ import './LeadForm.css';
 
 export default function LeadFormImovel() {
   const [step, setStep] = useState(1);
+  const [draftLeadId, setDraftLeadId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nome: '',
     cpf: '',
@@ -20,11 +21,20 @@ export default function LeadFormImovel() {
   });
   
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  const goToDetailsStep = () => {
+  const getErrorMessage = (err: unknown) => {
+    if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
+      return err.message;
+    }
+
+    return err instanceof Error ? err.message : 'Erro ao salvar os dados. Tente novamente.';
+  };
+
+  const goToDetailsStep = async () => {
     setError('');
 
     if (!formData.nome.trim() || formData.telefone.replace(/\D/g, '').length < 10 || !parseCurrency(formData.valor_desejado)) {
@@ -32,7 +42,44 @@ export default function LeadFormImovel() {
       return;
     }
 
-    setStep(2);
+    setIsSavingDraft(true);
+
+    try {
+      const draftData = {
+        nome: formData.nome,
+        cpf: '',
+        telefone: formData.telefone.replace(/\D/g, ''),
+        data_nascimento: null,
+        placa: 'IMOVEL-PENDENTE',
+        ano: 0,
+        valor_desejado: parseCurrency(formData.valor_desejado),
+      };
+
+      if (draftLeadId) {
+        const { error: updateError } = await supabase
+          .from('leads_financiamento')
+          .update(draftData)
+          .eq('id', draftLeadId);
+
+        if (updateError) throw updateError;
+      } else {
+        const { data, error: insertError } = await supabase
+          .from('leads_financiamento')
+          .insert([draftData])
+          .select('id')
+          .single();
+
+        if (insertError) throw insertError;
+        if (data?.id) setDraftLeadId(data.id);
+      }
+
+      setStep(2);
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
+    } finally {
+      setIsSavingDraft(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -73,9 +120,14 @@ export default function LeadFormImovel() {
         valor_desejado: parseCurrency(formData.valor_desejado),
       };
 
-      const { error: supabaseError } = await supabase
-        .from('leads_financiamento')
-        .insert([dados]);
+      const { error: supabaseError } = draftLeadId
+        ? await supabase
+            .from('leads_financiamento')
+            .update(dados)
+            .eq('id', draftLeadId)
+        : await supabase
+            .from('leads_financiamento')
+            .insert([dados]);
 
       if (supabaseError) {
         throw supabaseError;
@@ -91,9 +143,9 @@ export default function LeadFormImovel() {
       });
 
       setIsSuccess(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'Erro ao enviar sua solicitação. Tente novamente mais tarde.');
+      setError(getErrorMessage(err) || 'Erro ao enviar sua solicitação. Tente novamente mais tarde.');
     } finally {
       setIsSubmitting(false);
     }
@@ -129,6 +181,7 @@ export default function LeadFormImovel() {
               tipo_imovel: 'Casa', ano_imovel: '', valor_desejado: ''
             });
             setTermsAccepted(false);
+            setDraftLeadId(null);
             setStep(1);
           }}
         >
@@ -197,8 +250,9 @@ export default function LeadFormImovel() {
               />
             </div>
 
-            <button type="button" className="btn btn-primary btn-submit" onClick={goToDetailsStep}>
-              Continuar
+            <button type="button" className="btn btn-primary btn-submit" onClick={goToDetailsStep} disabled={isSavingDraft}>
+              {isSavingDraft ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+              {isSavingDraft ? 'Salvando...' : 'Continuar'}
             </button>
           </>
         ) : (

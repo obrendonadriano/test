@@ -7,19 +7,25 @@ const missingConfigError = {
 };
 
 const disabledResponse = () => Promise.resolve({ data: null, error: missingConfigError });
+const disabledMutation = () => ({
+  data: null,
+  error: missingConfigError,
+  select: () => ({
+    single: disabledResponse,
+  }),
+  eq: disabledResponse,
+});
 
 const disabledSupabase = {
   from: () => ({
-    insert: disabledResponse,
+    insert: disabledMutation,
     select: () => ({
       order: disabledResponse,
     }),
     delete: () => ({
       eq: disabledResponse,
     }),
-    update: () => ({
-      eq: disabledResponse,
-    }),
+    update: disabledMutation,
   }),
 } as unknown as ReturnType<typeof createClient>;
 
